@@ -7,4 +7,4 @@ services:
       - IPTV_M3U_URL=
       - IPTV_EPG_URL=
     ports:
-      - "8000:8000"
+      - "8001:8000"
