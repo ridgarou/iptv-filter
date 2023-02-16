@@ -27,6 +27,7 @@ def playlistChannel2json(pc, last_visit):
         'group_title': pc['group_title'],
         'tvg_id': pc['tvg_id'],
         'tvg_name' : pc['tvg_name'],
+        'display_name' : pc['display_name'],
         'included' : pc['included'],
         'new' : new
     }
@@ -40,7 +41,7 @@ def channel_api(request, id=-1):
         else:
             last_visit = timezone.now()
 
-        objs = PlaylistChannel.objects.all().values('pk','group_title','tvg_id','tvg_name', 'included', 'first_seen')
+        objs = PlaylistChannel.objects.all().values('pk','group_title','tvg_id','tvg_name', 'included', 'first_seen', 'display_name')
         payload = json.dumps(list(map(lambda obj: playlistChannel2json(obj,last_visit), objs)))
 
         AppConfig.objects.update_or_create(key='last_visit', defaults={'value':timezone.now(), 'last_updated':timezone.now()})

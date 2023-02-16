@@ -75,19 +75,60 @@ def _update_tables(filetype):
     if filetype == 'm3u':
         # TODO: store regex in AppConfig, as well as relative index/position of id, name, etc. in case other providers format this differently.
         infopattern = re.compile('(?i)#EXTINF:-1 tvg-id="(.*?)" tvg-name="(.*?)" tvg-logo="(.*?)" group-title="(.*?)",(.*?)')
-        urlpattern = re.compile('(?i)^http')
+        urlpattern  = re.compile('(?i)^http')
+
+        tvgidpattern    = re.compile('tvg-id="(?P<val>.*?)"')
+        tvgnamepattern  = re.compile('tvg-name="(?P<val>.*?)"')
+        tvglogopattern  = re.compile('tvg-logo="(?P<val>.*?)"')
+        tvggrouppattern = re.compile('group-title="(?P<val>.*?)"')
+        dispnamepattern = re.compile(',(?P<val>.*?)$')
 
         existing_channels = dict(PlaylistChannel.objects.values_list('tvg_name', 'first_seen'))
         included_channels = set(PlaylistChannel.objects.filter(included=True).values_list('tvg_name', flat=True))
+
         PlaylistChannel.objects.all().delete()
 
         start_perftime = time.perf_counter()
+
         new_channels = []
         for line in file.splitlines():
             m = infopattern.findall(line)
-            if len(m) > 0:
+            #if len(m) > 0:
+            #if len(tvgidvalue) + len(tvgnamevalue) + len(tvglogovalue) + len(tvggroupvalue) + len(dispnamevalue) > 0:
+            if line.__contains__("#EXTINF") :
+                value_matches = tvgidpattern.search(line)
+                if value_matches is None:
+                    tvgidvalue    = ""
+                else:
+                    tvgidvalue    = value_matches.group('val').strip()
+
+                value_matches = tvgnamepattern.search(line)
+                if value_matches is None:
+                    tvgnamevalue    = ""
+                else:
+                    tvgnamevalue    = value_matches.group('val').strip()
+
+                value_matches = tvglogopattern.search(line)
+                if value_matches is None:
+                    tvglogovalue    = ""
+                else:
+                    tvglogovalue    = value_matches.group('val').strip()
+
+                value_matches = tvggrouppattern.search(line)
+                if value_matches is None:
+                    tvggroupvalue    = ""
+                else:
+                    tvggroupvalue    = value_matches.group('val').strip()
+
+                value_matches = dispnamepattern.search(line)
+                if value_matches is None:
+                    dispnamevalue    = ""
+                else:
+                    dispnamevalue    = value_matches.group('val').strip()
+
                 # This was an #EXTINF line.
-                tvg_name = m[0][1]
+                # tvg_name = m[0][1]
+                tvg_name = tvgnamevalue
 
                 if tvg_name in existing_channels:
                     included = tvg_name in included_channels
@@ -97,9 +138,9 @@ def _update_tables(filetype):
                     included = False
                     first_seen = now
 
-                pc = PlaylistChannel(tvg_id=m[0][0], tvg_name=tvg_name, tvg_logo=m[0][2], group_title=m[0][3], last_updated=now, first_seen=first_seen, included=included)
+                #pc = PlaylistChannel(tvg_id=m[0][0], tvg_name=tvg_name, tvg_logo=m[0][2], group_title=m[0][3], last_updated=now, first_seen=first_seen, included=included)
+                pc = PlaylistChannel(tvg_id=tvgidvalue, tvg_name=tvg_name, tvg_logo=tvglogovalue, group_title=tvggroupvalue, last_updated=now, first_seen=first_seen, included=included, display_name=dispnamevalue)
                 # save after we parse the URL on the next line.
-
             else:
                 if urlpattern.match(line):
                     # This is the URL line.
